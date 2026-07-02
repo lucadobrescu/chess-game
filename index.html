@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-piece-skin="classic" data-board-skin="terracotta" data-bg-skin="imperium">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -86,31 +86,85 @@
       </div>
 
       <aside class="score-panel">
-        <h2 class="panel-title">Tabula Capturae</h2>
+        <section class="skin-picker" aria-label="Appearance settings">
+          <h2 class="panel-title">Specus Visus</h2>
 
-        <div class="score-block score-block--white">
-          <div class="score-block__header">
-            <span class="score-label">Albus</span>
-            <span id="white-advantage" class="score-advantage"></span>
+          <div class="skin-group">
+            <label class="skin-label" for="piece-skin">Pieces</label>
+            <select id="piece-skin" class="skin-select">
+              <option value="classic">Classic</option>
+              <option value="alpha">Alpha</option>
+              <option value="bold">Bold</option>
+              <option value="ivory">Ivory</option>
+            </select>
           </div>
-          <div id="white-captured" class="captured-pieces"></div>
-          <div class="match-row">
-            <span class="match-label">Victoriae</span>
-            <span id="white-wins" class="match-score">0</span>
+
+          <div class="skin-group">
+            <label class="skin-label" for="board-skin">Board</label>
+            <select id="board-skin" class="skin-select">
+              <option value="terracotta">Terracotta</option>
+              <option value="walnut">Walnut</option>
+              <option value="slate">Slate</option>
+              <option value="emerald">Emerald</option>
+            </select>
           </div>
-        </div>
+
+          <div class="skin-group">
+            <label class="skin-label" for="bg-skin">Background</label>
+            <select id="bg-skin" class="skin-select">
+              <option value="imperium">Imperium</option>
+              <option value="midnight">Midnight</option>
+              <option value="forest">Forest</option>
+              <option value="obsidian">Obsidian</option>
+            </select>
+          </div>
+        </section>
 
         <div class="panel-divider"></div>
 
-        <div class="score-block score-block--black">
-          <div class="score-block__header">
-            <span class="score-label">Niger</span>
-            <span id="black-advantage" class="score-advantage"></span>
+        <h2 class="panel-title">Tabula Punctorum</h2>
+
+        <table class="score-table">
+          <thead>
+            <tr>
+              <th scope="col"></th>
+              <th scope="col">Albus</th>
+              <th scope="col">Niger</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Puncta</th>
+              <td id="white-points">0</td>
+              <td id="black-points">0</td>
+            </tr>
+            <tr>
+              <th scope="row">Capturae</th>
+              <td id="white-capture-count">0</td>
+              <td id="black-capture-count">0</td>
+            </tr>
+            <tr>
+              <th scope="row">Victoriae</th>
+              <td id="white-wins">0</td>
+              <td id="black-wins">0</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Motus</th>
+              <td colspan="2" id="move-count">0</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="captured-section">
+          <div class="captured-row">
+            <span class="captured-label">Albus cepit</span>
+            <div id="white-captured" class="captured-pieces"></div>
           </div>
-          <div id="black-captured" class="captured-pieces"></div>
-          <div class="match-row">
-            <span class="match-label">Victoriae</span>
-            <span id="black-wins" class="match-score">0</span>
+          <div class="captured-row">
+            <span class="captured-label">Niger cepit</span>
+            <div id="black-captured" class="captured-pieces"></div>
           </div>
         </div>
 
@@ -133,12 +187,6 @@
           </div>
         </section>
 
-        <div class="panel-divider"></div>
-
-        <div class="move-counter">
-          <span class="match-label">Motus</span>
-          <span id="move-count" class="match-score">0</span>
-        </div>
       </aside>
     </div>
 

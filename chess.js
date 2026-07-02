@@ -1,7 +1,94 @@
-const GLYPHS = {
-  wK: "♔", wQ: "♕", wR: "♖", wB: "♗", wN: "♘", wP: "♙",
-  bK: "♚", bQ: "♛", bR: "♜", bB: "♝", bN: "♞", bP: "♟",
+const PIECE_SKINS = {
+  classic: {
+    wK: "♔", wQ: "♕", wR: "♖", wB: "♗", wN: "♘", wP: "♙",
+    bK: "♚", bQ: "♛", bR: "♜", bB: "♝", bN: "♞", bP: "♟",
+  },
+  alpha: {
+    wK: "K", wQ: "Q", wR: "R", wB: "B", wN: "N", wP: "P",
+    bK: "K", bQ: "Q", bR: "R", bB: "B", bN: "N", bP: "P",
+  },
+  bold: {
+    wK: "♔", wQ: "♕", wR: "♖", wB: "♗", wN: "♘", wP: "♙",
+    bK: "♚", bQ: "♛", bR: "♜", bB: "♝", bN: "♞", bP: "♟",
+  },
+  ivory: {
+    wK: "♔", wQ: "♕", wR: "♖", wB: "♗", wN: "♘", wP: "♙",
+    bK: "♚", bQ: "♛", bR: "♜", bB: "♝", bN: "♞", bP: "♟",
+  },
 };
+
+const SKIN_DEFAULTS = {
+  piece: "classic",
+  board: "terracotta",
+  bg: "imperium",
+};
+
+const BOARD_SKINS = ["terracotta", "walnut", "slate", "emerald"];
+const BG_SKINS = ["imperium", "midnight", "forest", "obsidian"];
+
+const SKIN_STORAGE_KEY = "chess-skins";
+
+let activeSkins = { ...SKIN_DEFAULTS };
+
+function getGlyph(piece) {
+  return PIECE_SKINS[activeSkins.piece][piece];
+}
+
+function loadSkins() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SKIN_STORAGE_KEY));
+    if (saved) {
+      if (saved.piece && PIECE_SKINS[saved.piece]) activeSkins.piece = saved.piece;
+      if (saved.board && BOARD_SKINS.includes(saved.board)) activeSkins.board = saved.board;
+      if (saved.bg && BG_SKINS.includes(saved.bg)) activeSkins.bg = saved.bg;
+    }
+  } catch {
+    /* use defaults */
+  }
+}
+
+function saveSkins() {
+  localStorage.setItem(SKIN_STORAGE_KEY, JSON.stringify(activeSkins));
+}
+
+function applySkins() {
+  const root = document.documentElement;
+  root.dataset.pieceSkin = activeSkins.piece;
+  root.dataset.boardSkin = activeSkins.board;
+  root.dataset.bgSkin = activeSkins.bg;
+
+  const pieceSelect = document.getElementById("piece-skin");
+  const boardSelect = document.getElementById("board-skin");
+  const bgSelect = document.getElementById("bg-skin");
+  if (pieceSelect) pieceSelect.value = activeSkins.piece;
+  if (boardSelect) boardSelect.value = activeSkins.board;
+  if (bgSelect) bgSelect.value = activeSkins.bg;
+}
+
+function initSkinPicker() {
+  loadSkins();
+  applySkins();
+
+  document.getElementById("piece-skin").addEventListener("change", (e) => {
+    activeSkins.piece = e.target.value;
+    saveSkins();
+    applySkins();
+    render();
+    updateScorePanel();
+  });
+
+  document.getElementById("board-skin").addEventListener("change", (e) => {
+    activeSkins.board = e.target.value;
+    saveSkins();
+    applySkins();
+  });
+
+  document.getElementById("bg-skin").addEventListener("change", (e) => {
+    activeSkins.bg = e.target.value;
+    saveSkins();
+    applySkins();
+  });
+}
 
 const PIECE_VALUE = { P: 1, N: 3, B: 3, R: 5, Q: 9, K: 0 };
 
@@ -11,8 +98,10 @@ const turnIndicatorEl = document.getElementById("turn-indicator");
 const resetBtn = document.getElementById("reset");
 const whiteCapturedEl = document.getElementById("white-captured");
 const blackCapturedEl = document.getElementById("black-captured");
-const whiteAdvantageEl = document.getElementById("white-advantage");
-const blackAdvantageEl = document.getElementById("black-advantage");
+const whitePointsEl = document.getElementById("white-points");
+const blackPointsEl = document.getElementById("black-points");
+const whiteCaptureCountEl = document.getElementById("white-capture-count");
+const blackCaptureCountEl = document.getElementById("black-capture-count");
 const whiteWinsEl = document.getElementById("white-wins");
 const blackWinsEl = document.getElementById("black-wins");
 const moveCountEl = document.getElementById("move-count");
@@ -89,12 +178,12 @@ function materialValue(pieces) {
 function updateScorePanel() {
   whiteCapturedEl.innerHTML = capturedByWhite
     .map((p, i) =>
-      `<span class="captured-piece black${i >= prevWhiteCaptured ? " is-new" : ""}">${GLYPHS[p]}</span>`
+      `<span class="captured-piece black${i >= prevWhiteCaptured ? " is-new" : ""}">${getGlyph(p)}</span>`
     )
     .join("");
   blackCapturedEl.innerHTML = capturedByBlack
     .map((p, i) =>
-      `<span class="captured-piece white${i >= prevBlackCaptured ? " is-new" : ""}">${GLYPHS[p]}</span>`
+      `<span class="captured-piece white${i >= prevBlackCaptured ? " is-new" : ""}">${getGlyph(p)}</span>`
     )
     .join("");
   prevWhiteCaptured = capturedByWhite.length;
@@ -102,13 +191,20 @@ function updateScorePanel() {
 
   const whiteMat = materialValue(capturedByWhite);
   const blackMat = materialValue(capturedByBlack);
-  const diff = whiteMat - blackMat;
 
-  whiteAdvantageEl.textContent = diff > 0 ? `+${diff}` : "";
-  blackAdvantageEl.textContent = diff < 0 ? `+${-diff}` : "";
+  whitePointsEl.textContent = whiteMat;
+  blackPointsEl.textContent = blackMat;
+  whitePointsEl.classList.toggle("is-leading", whiteMat > blackMat);
+  blackPointsEl.classList.toggle("is-leading", blackMat > whiteMat);
+
+  whiteCaptureCountEl.textContent = capturedByWhite.length;
+  blackCaptureCountEl.textContent = capturedByBlack.length;
 
   whiteWinsEl.textContent = matchWins.w;
   blackWinsEl.textContent = matchWins.b;
+  whiteWinsEl.classList.toggle("is-leading", matchWins.w > matchWins.b);
+  blackWinsEl.classList.toggle("is-leading", matchWins.b > matchWins.w);
+
   moveCountEl.textContent = moveCount;
 }
 
@@ -353,7 +449,7 @@ function render(entrance = false) {
       if (piece) {
         const span = document.createElement("span");
         span.className = "piece " + (piece[0] === "w" ? "white" : "black");
-        span.textContent = GLYPHS[piece];
+        span.textContent = getGlyph(piece);
         if (entrance) {
           span.classList.add("enter");
           span.style.animationDelay = `${(r + c) * 25}ms`;
@@ -432,4 +528,5 @@ moveHistoryListEl.addEventListener("click", (e) => {
   showLesson(moveHistory[index], index);
 });
 
+initSkinPicker();
 newGame();
