@@ -3,15 +3,32 @@ const GLYPHS = {
   bK: "♚", bQ: "♛", bR: "♜", bB: "♝", bN: "♞", bP: "♟",
 };
 
+const PIECE_VALUE = { P: 1, N: 3, B: 3, R: 5, Q: 9, K: 0 };
+
 const boardEl = document.getElementById("board");
 const statusEl = document.getElementById("status");
+const turnIndicatorEl = document.getElementById("turn-indicator");
 const resetBtn = document.getElementById("reset");
+const whiteCapturedEl = document.getElementById("white-captured");
+const blackCapturedEl = document.getElementById("black-captured");
+const whiteAdvantageEl = document.getElementById("white-advantage");
+const blackAdvantageEl = document.getElementById("black-advantage");
+const whiteWinsEl = document.getElementById("white-wins");
+const blackWinsEl = document.getElementById("black-wins");
+const moveCountEl = document.getElementById("move-count");
 
-let board;      // 8x8 array of piece codes ("wP", "bK", ...) or null
-let turn;       // "w" or "b"
-let selected;   // {row, col} or null
-let moves;      // legal targets for the selected piece
+let board;
+let turn;
+let selected;
+let moves;
 let gameOver;
+let animating;
+let moveCount;
+let capturedByWhite;
+let capturedByBlack;
+let matchWins;
+let prevWhiteCaptured;
+let prevBlackCaptured;
 
 function initialBoard() {
   const back = ["R", "N", "B", "Q", "K", "B", "N", "R"];
@@ -31,15 +48,61 @@ function newGame() {
   selected = null;
   moves = [];
   gameOver = false;
-  statusEl.textContent = "White to move";
-  render();
+  animating = false;
+  moveCount = 0;
+  capturedByWhite = [];
+  capturedByBlack = [];
+  prevWhiteCaptured = 0;
+  prevBlackCaptured = 0;
+  updateStatus();
+  render(true);
+  updateScorePanel();
+}
+
+function updateStatus(winner) {
+  if (winner) {
+    statusEl.textContent = (winner === "w" ? "White" : "Black") + " wins!";
+    turnIndicatorEl.className = "turn-indicator turn-" + (winner === "w" ? "white" : "black");
+    return;
+  }
+  statusEl.textContent = (turn === "w" ? "White" : "Black") + " to move";
+  turnIndicatorEl.className = "turn-indicator turn-" + (turn === "w" ? "white" : "black");
+}
+
+function materialValue(pieces) {
+  return pieces.reduce((sum, p) => sum + PIECE_VALUE[p[1]], 0);
+}
+
+function updateScorePanel() {
+  whiteCapturedEl.innerHTML = capturedByWhite
+    .map((p, i) =>
+      `<span class="captured-piece black${i >= prevWhiteCaptured ? " is-new" : ""}">${GLYPHS[p]}</span>`
+    )
+    .join("");
+  blackCapturedEl.innerHTML = capturedByBlack
+    .map((p, i) =>
+      `<span class="captured-piece white${i >= prevBlackCaptured ? " is-new" : ""}">${GLYPHS[p]}</span>`
+    )
+    .join("");
+  prevWhiteCaptured = capturedByWhite.length;
+  prevBlackCaptured = capturedByBlack.length;
+
+  const whiteMat = materialValue(capturedByWhite);
+  const blackMat = materialValue(capturedByBlack);
+  const diff = whiteMat - blackMat;
+
+  whiteAdvantageEl.textContent = diff > 0 ? `+${diff}` : "";
+  blackAdvantageEl.textContent = diff < 0 ? `+${-diff}` : "";
+
+  whiteWinsEl.textContent = matchWins.w;
+  blackWinsEl.textContent = matchWins.b;
+  moveCountEl.textContent = moveCount;
 }
 
 function inBounds(r, c) {
   return r >= 0 && r < 8 && c >= 0 && c < 8;
 }
 
-// Moves along a direction until blocked (rook/bishop/queen).
 function ray(r, c, dr, dc, color, out) {
   let nr = r + dr, nc = c + dc;
   while (inBounds(nr, nc)) {
@@ -103,27 +166,64 @@ function legalMoves(row, col) {
   return out;
 }
 
-function makeMove(from, to) {
+function applyMove(from, to) {
   const piece = board[from.row][from.col];
   const captured = board[to.row][to.col];
   board[to.row][to.col] = piece;
   board[from.row][from.col] = null;
 
-  // Pawn promotion (auto-queen)
   if (piece[1] === "P" && (to.row === 0 || to.row === 7)) {
     board[to.row][to.col] = piece[0] + "Q";
   }
 
+  if (captured) {
+    if (turn === "w") capturedByWhite.push(captured);
+    else capturedByBlack.push(captured);
+  }
+
+  moveCount++;
+
+  let winner = null;
   if (captured && captured[1] === "K") {
     gameOver = true;
-    statusEl.textContent = (turn === "w" ? "White" : "Black") + " wins!";
+    winner = turn;
+    matchWins[winner]++;
   } else {
     turn = turn === "w" ? "b" : "w";
-    statusEl.textContent = (turn === "w" ? "White" : "Black") + " to move";
   }
+
+  return { captured, winner };
 }
 
-function render() {
+function getSquare(row, col) {
+  return boardEl.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function animateMove(from, to) {
+  const fromSq = getSquare(from.row, from.col);
+  const toSq = getSquare(to.row, to.col);
+  if (!fromSq || !toSq) return;
+
+  const pieceEl = fromSq.querySelector(".piece");
+  if (!pieceEl) return;
+
+  const capturedEl = toSq.querySelector(".piece");
+  if (capturedEl) capturedEl.classList.add("captured");
+
+  const dx = toSq.offsetLeft - fromSq.offsetLeft;
+  const dy = toSq.offsetTop - fromSq.offsetTop;
+
+  pieceEl.classList.add("moving");
+  pieceEl.style.transform = `translate(${dx}px, ${dy}px)`;
+
+  await wait(380);
+}
+
+function render(entrance = false) {
   boardEl.innerHTML = "";
   for (let r = 0; r < 8; r++) {
     for (let c = 0; c < 8; c++) {
@@ -131,19 +231,29 @@ function render() {
       sq.className = "square " + ((r + c) % 2 === 0 ? "light" : "dark");
       sq.dataset.row = r;
       sq.dataset.col = c;
+
       const piece = board[r][c];
       if (piece) {
         const span = document.createElement("span");
         span.className = "piece " + (piece[0] === "w" ? "white" : "black");
         span.textContent = GLYPHS[piece];
+        if (entrance) {
+          span.classList.add("enter");
+          span.style.animationDelay = `${(r + c) * 25}ms`;
+        }
+        if (selected && selected.row === r && selected.col === c) {
+          span.classList.add("lifted");
+        }
         sq.appendChild(span);
       }
+
       if (selected && selected.row === r && selected.col === c) {
         sq.classList.add("selected");
       }
       if (moves.some((m) => m.row === r && m.col === c)) {
         sq.classList.add(piece ? "capture" : "move");
       }
+
       boardEl.appendChild(sq);
     }
   }
@@ -155,14 +265,26 @@ boardEl.addEventListener("click", (e) => {
   onSquareClick(Number(sq.dataset.row), Number(sq.dataset.col));
 });
 
-function onSquareClick(row, col) {
-  if (gameOver) return;
+async function onSquareClick(row, col) {
+  if (gameOver || animating) return;
 
   if (selected && moves.some((m) => m.row === row && m.col === col)) {
-    makeMove(selected, { row, col });
+    animating = true;
+    const from = selected;
+    const to = { row, col };
+
+    await animateMove(from, to);
+
+    const { winner } = applyMove(from, to);
     selected = null;
     moves = [];
+
+    if (winner) updateStatus(winner);
+    else updateStatus();
+
     render();
+    updateScorePanel();
+    animating = false;
     return;
   }
 
@@ -177,6 +299,7 @@ function onSquareClick(row, col) {
   render();
 }
 
+matchWins = { w: 0, b: 0 };
 resetBtn.addEventListener("click", newGame);
 
 newGame();

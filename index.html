@@ -64,19 +64,63 @@
     <header class="game-header">
       <p class="subtitle">Ludus Scaccorum</p>
       <h1>Chess</h1>
-      <p id="status">White to move</p>
+      <div class="status-bar">
+        <span id="turn-indicator" class="turn-indicator turn-white" aria-hidden="true"></span>
+        <p id="status">White to move</p>
+      </div>
     </header>
 
-    <div class="board-frame">
-      <div class="board-coords board-coords--files">
-        <span>a</span><span>b</span><span>c</span><span>d</span>
-        <span>e</span><span>f</span><span>g</span><span>h</span>
+    <div class="game-body">
+      <div class="board-column">
+        <div class="board-frame">
+          <div class="board-coords board-coords--files">
+            <span>a</span><span>b</span><span>c</span><span>d</span>
+            <span>e</span><span>f</span><span>g</span><span>h</span>
+          </div>
+          <div class="board-coords board-coords--ranks">
+            <span>8</span><span>7</span><span>6</span><span>5</span>
+            <span>4</span><span>3</span><span>2</span><span>1</span>
+          </div>
+          <div id="board"></div>
+        </div>
       </div>
-      <div class="board-coords board-coords--ranks">
-        <span>8</span><span>7</span><span>6</span><span>5</span>
-        <span>4</span><span>3</span><span>2</span><span>1</span>
-      </div>
-      <div id="board"></div>
+
+      <aside class="score-panel">
+        <h2 class="panel-title">Tabula Capturae</h2>
+
+        <div class="score-block score-block--white">
+          <div class="score-block__header">
+            <span class="score-label">Albus</span>
+            <span id="white-advantage" class="score-advantage"></span>
+          </div>
+          <div id="white-captured" class="captured-pieces"></div>
+          <div class="match-row">
+            <span class="match-label">Victoriae</span>
+            <span id="white-wins" class="match-score">0</span>
+          </div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="score-block score-block--black">
+          <div class="score-block__header">
+            <span class="score-label">Niger</span>
+            <span id="black-advantage" class="score-advantage"></span>
+          </div>
+          <div id="black-captured" class="captured-pieces"></div>
+          <div class="match-row">
+            <span class="match-label">Victoriae</span>
+            <span id="black-wins" class="match-score">0</span>
+          </div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="move-counter">
+          <span class="match-label">Motus</span>
+          <span id="move-count" class="match-score">0</span>
+        </div>
+      </aside>
     </div>
 
     <footer class="game-footer">
