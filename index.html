@@ -4,14 +4,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chess</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="game">
-    <h1>Chess</h1>
-    <p id="status">White to move</p>
-    <div id="board"></div>
-    <button id="reset">New game</button>
+    <header class="game-header">
+      <p class="subtitle">Ludus Scaccorum</p>
+      <h1>Chess</h1>
+      <p id="status">White to move</p>
+    </header>
+
+    <div class="board-frame">
+      <div class="board-coords board-coords--files">
+        <span>a</span><span>b</span><span>c</span><span>d</span>
+        <span>e</span><span>f</span><span>g</span><span>h</span>
+      </div>
+      <div class="board-coords board-coords--ranks">
+        <span>8</span><span>7</span><span>6</span><span>5</span>
+        <span>4</span><span>3</span><span>2</span><span>1</span>
+      </div>
+      <div id="board"></div>
+    </div>
+
+    <footer class="game-footer">
+      <button id="reset" type="button">Novus Ludus</button>
+    </footer>
   </main>
   <script src="chess.js"></script>
 </body>
