@@ -23,3 +23,7 @@ _Avoid_: Round, game (ambiguous with Game)
 **Ludus**:
 The in-app label for starting a new match (from the existing "Novus Ludus" reset button).
 _Avoid_: New game, restart
+
+**Ping-Pong**:
+A real-time arcade Game rendered on canvas with keyboard-controlled paddles (W/S vs arrow keys).
+_Avoid_: Table tennis, pong (lowercase, ambiguous with sound effect)
