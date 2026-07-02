@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chess</title>
+  <title>Ludus Arcades</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -63,7 +63,17 @@
   <main class="game">
     <header class="game-header">
       <p class="subtitle">Ludus Scaccorum</p>
-      <h1>Chess</h1>
+      <h1 id="game-title">Chess</h1>
+
+      <nav class="game-tabs" role="tablist" aria-label="Select game">
+        <button type="button" class="game-tab is-active" role="tab" data-game="chess" aria-selected="true">
+          <span class="game-tab-icon" aria-hidden="true">♟</span> Chess
+        </button>
+        <button type="button" class="game-tab" role="tab" data-game="pingpong" aria-selected="false">
+          <span class="game-tab-icon" aria-hidden="true">🏓</span> Ping-Pong
+        </button>
+      </nav>
+
       <div class="status-bar">
         <span id="turn-indicator" class="turn-indicator turn-white" aria-hidden="true"></span>
         <p id="status">White to move</p>
@@ -71,25 +81,13 @@
     </header>
 
     <div class="game-body">
-      <div class="board-column">
-        <div class="board-frame">
-          <div class="board-coords board-coords--files">
-            <span>a</span><span>b</span><span>c</span><span>d</span>
-            <span>e</span><span>f</span><span>g</span><span>h</span>
-          </div>
-          <div class="board-coords board-coords--ranks">
-            <span>8</span><span>7</span><span>6</span><span>5</span>
-            <span>4</span><span>3</span><span>2</span><span>1</span>
-          </div>
-          <div id="board"></div>
-        </div>
-      </div>
+      <div id="game-mount" class="game-mount"></div>
 
       <aside class="score-panel">
-        <section class="skin-picker" aria-label="Appearance settings">
+        <section class="skin-picker" data-panel="chess pingpong" aria-label="Appearance settings">
           <h2 class="panel-title">Specus Visus</h2>
 
-          <div class="skin-group">
+          <div class="skin-group" data-panel="chess">
             <label class="skin-label" for="piece-skin">Pieces</label>
             <select id="piece-skin" class="skin-select">
               <option value="classic">Classic</option>
@@ -120,71 +118,101 @@
           </div>
         </section>
 
-        <div class="panel-divider"></div>
+        <div class="panel-divider" data-panel="chess pingpong"></div>
 
-        <h2 class="panel-title">Tabula Punctorum</h2>
+        <section data-panel="chess">
+          <h2 class="panel-title">Tabula Punctorum</h2>
 
-        <table class="score-table">
-          <thead>
-            <tr>
-              <th scope="col"></th>
-              <th scope="col">Albus</th>
-              <th scope="col">Niger</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row">Puncta</th>
-              <td id="white-points">0</td>
-              <td id="black-points">0</td>
-            </tr>
-            <tr>
-              <th scope="row">Capturae</th>
-              <td id="white-capture-count">0</td>
-              <td id="black-capture-count">0</td>
-            </tr>
-            <tr>
-              <th scope="row">Victoriae</th>
-              <td id="white-wins">0</td>
-              <td id="black-wins">0</td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr>
-              <th scope="row">Motus</th>
-              <td colspan="2" id="move-count">0</td>
-            </tr>
-          </tfoot>
-        </table>
+          <table class="score-table">
+            <thead>
+              <tr>
+                <th scope="col"></th>
+                <th scope="col">Albus</th>
+                <th scope="col">Niger</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Puncta</th>
+                <td id="white-points">0</td>
+                <td id="black-points">0</td>
+              </tr>
+              <tr>
+                <th scope="row">Capturae</th>
+                <td id="white-capture-count">0</td>
+                <td id="black-capture-count">0</td>
+              </tr>
+              <tr>
+                <th scope="row">Victoriae</th>
+                <td id="white-wins">0</td>
+                <td id="black-wins">0</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row">Motus</th>
+                <td colspan="2" id="move-count">0</td>
+              </tr>
+            </tfoot>
+          </table>
 
-        <div class="captured-section">
-          <div class="captured-row">
-            <span class="captured-label">Albus cepit</span>
-            <div id="white-captured" class="captured-pieces"></div>
-          </div>
-          <div class="captured-row">
-            <span class="captured-label">Niger cepit</span>
-            <div id="black-captured" class="captured-pieces"></div>
-          </div>
-        </div>
-
-        <div class="panel-divider"></div>
-
-        <section class="move-history">
-          <h3 class="history-title">Acta Motuum</h3>
-          <p class="history-subtitle">Tap a move to study notation</p>
-          <div class="history-table">
-            <div class="history-header">
-              <span>#</span>
-              <span>Albus</span>
-              <span>Niger</span>
+          <div class="captured-section">
+            <div class="captured-row">
+              <span class="captured-label">Albus cepit</span>
+              <div id="white-captured" class="captured-pieces"></div>
             </div>
-            <div id="move-history-list" class="history-list"></div>
+            <div class="captured-row">
+              <span class="captured-label">Niger cepit</span>
+              <div id="black-captured" class="captured-pieces"></div>
+            </div>
           </div>
-          <div id="move-lesson" class="move-lesson" hidden>
-            <p class="lesson-label">Discere</p>
-            <p id="lesson-text" class="lesson-text"></p>
-          </div>
+
+          <div class="panel-divider"></div>
+
+          <section class="move-history">
+            <h3 class="history-title">Acta Motuum</h3>
+            <p class="history-subtitle">Tap a move to study notation</p>
+            <div class="history-table">
+              <div class="history-header">
+                <span>#</span>
+                <span>Albus</span>
+                <span>Niger</span>
+              </div>
+              <div id="move-history-list" class="history-list"></div>
+            </div>
+            <div id="move-lesson" class="move-lesson" hidden>
+              <p class="lesson-label">Discere</p>
+              <p id="lesson-text" class="lesson-text"></p>
+            </div>
+          </section>
+        </section>
+
+        <section data-panel="pingpong" hidden>
+          <h2 class="panel-title">Tabula Punctorum</h2>
+
+          <table class="score-table">
+            <thead>
+              <tr>
+                <th scope="col"></th>
+                <th scope="col">Sinister</th>
+                <th scope="col">Dexter</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Puncta</th>
+                <td id="pp-left-score">0</td>
+                <td id="pp-right-score">0</td>
+              </tr>
+              <tr>
+                <th scope="row">Victoriae</th>
+                <td id="pp-left-wins">0</td>
+                <td id="pp-right-wins">0</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p class="pingpong-panel-hint">First to 11, win by 2. Novus Ludus starts a fresh match.</p>
         </section>
 
       </aside>
@@ -194,6 +222,10 @@
       <button id="reset" type="button">Novus Ludus</button>
     </footer>
   </main>
-  <script src="chess.js"></script>
+
+  <script src="js/shell.js"></script>
+  <script src="js/chess-game.js"></script>
+  <script src="js/pingpong-game.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
