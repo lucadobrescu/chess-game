@@ -24,6 +24,10 @@ _Avoid_: Round, game (ambiguous with Game)
 The in-app label for starting a new match (from the existing "Novus Ludus" reset button).
 _Avoid_: New game, restart
 
+**Freestyle (variant)**:
+A Chess variant where the back rank is randomly shuffled (bishops on opposite colors, king between rooks) while all other rules match Standard.
+_Avoid_: Chess960 (implies full FIDE castling rules), custom setup, Fischer Random
+
 **Ping-Pong**:
 A real-time arcade Game rendered on canvas with keyboard-controlled paddles (W/S vs arrow keys).
 _Avoid_: Table tennis, pong (lowercase, ambiguous with sound effect)
