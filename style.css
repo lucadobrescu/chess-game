@@ -750,6 +750,193 @@ h1 {
   margin-top: 0;
 }
 
+.move-history {
+  margin-top: 0.25rem;
+}
+
+.history-title {
+  font-family: Cinzel, serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #c9a227;
+  margin-bottom: 0.25rem;
+}
+
+.history-subtitle {
+  font-size: 0.78rem;
+  font-style: italic;
+  text-align: center;
+  color: #a89880;
+  margin-bottom: 0.55rem;
+}
+
+.history-table {
+  border: 1px solid rgba(184, 148, 63, 0.22);
+  border-radius: 2px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.history-header,
+.history-row {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr 1fr;
+  gap: 0.25rem;
+  align-items: center;
+  padding: 0.3rem 0.4rem;
+}
+
+.history-header {
+  font-family: Cinzel, serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #a89880;
+  background: rgba(0, 0, 0, 0.22);
+  border-bottom: 1px solid rgba(184, 148, 63, 0.2);
+}
+
+.history-list {
+  max-height: 7.5rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #b8943f rgba(0, 0, 0, 0.2);
+}
+
+.history-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+  background: #b8943f;
+  border-radius: 3px;
+}
+
+.history-row:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.history-num {
+  font-family: Cinzel, serif;
+  font-size: 0.7rem;
+  color: #8a7a68;
+  text-align: right;
+  padding-right: 0.15rem;
+}
+
+.history-move {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.15rem 0.3rem;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: #e8dcc4;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.history-move--white {
+  color: #f5f0e4;
+}
+
+.history-move--black {
+  color: #c4b8a8;
+}
+
+.history-move--pending {
+  display: block;
+  min-height: 1.4rem;
+  cursor: default;
+}
+
+.history-move:hover {
+  background: rgba(201, 162, 39, 0.12);
+  border-color: rgba(201, 162, 39, 0.25);
+}
+
+.history-move.is-selected {
+  background: rgba(201, 162, 39, 0.2);
+  border-color: rgba(201, 162, 39, 0.45);
+  color: #fff8e8;
+}
+
+.history-empty {
+  padding: 0.65rem 0.5rem;
+  font-size: 0.82rem;
+  font-style: italic;
+  text-align: center;
+  color: #8a7a68;
+  line-height: 1.35;
+}
+
+.move-lesson {
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.6rem;
+  background: rgba(201, 162, 39, 0.08);
+  border: 1px solid rgba(201, 162, 39, 0.22);
+  border-radius: 2px;
+  animation: lesson-in 0.35s ease both;
+}
+
+@keyframes lesson-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lesson-label {
+  font-family: Cinzel, serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #c9a227;
+  margin-bottom: 0.3rem;
+}
+
+.lesson-text {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #d8ccb8;
+}
+
+.lesson-text strong {
+  display: block;
+  font-family: Cinzel, serif;
+  font-size: 0.95rem;
+  color: #f0e8d8;
+  margin-bottom: 0.2rem;
+}
+
+.lesson-detail,
+.lesson-capture {
+  display: block;
+  font-size: 0.82rem;
+  color: #a89880;
+  margin-bottom: 0.15rem;
+}
+
+.lesson-text em {
+  display: block;
+  margin-top: 0.35rem;
+  font-style: italic;
+  color: #c9b890;
+  font-size: 0.84rem;
+}
+
 .game-footer {
   text-align: center;
   margin-top: 1.75rem;

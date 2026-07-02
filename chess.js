@@ -16,6 +16,14 @@ const blackAdvantageEl = document.getElementById("black-advantage");
 const whiteWinsEl = document.getElementById("white-wins");
 const blackWinsEl = document.getElementById("black-wins");
 const moveCountEl = document.getElementById("move-count");
+const moveHistoryListEl = document.getElementById("move-history-list");
+const moveLessonEl = document.getElementById("move-lesson");
+const lessonTextEl = document.getElementById("lesson-text");
+
+const FILES = "abcdefgh";
+const PIECE_NAMES = {
+  P: "Pawn", N: "Knight", B: "Bishop", R: "Rook", Q: "Queen", K: "King",
+};
 
 let board;
 let turn;
@@ -29,6 +37,8 @@ let capturedByBlack;
 let matchWins;
 let prevWhiteCaptured;
 let prevBlackCaptured;
+let moveHistory;
+let selectedHistoryIndex;
 
 function initialBoard() {
   const back = ["R", "N", "B", "Q", "K", "B", "N", "R"];
@@ -54,9 +64,12 @@ function newGame() {
   capturedByBlack = [];
   prevWhiteCaptured = 0;
   prevBlackCaptured = 0;
+  moveHistory = [];
+  selectedHistoryIndex = -1;
   updateStatus();
   render(true);
   updateScorePanel();
+  updateMoveHistory();
 }
 
 function updateStatus(winner) {
@@ -97,6 +110,110 @@ function updateScorePanel() {
   whiteWinsEl.textContent = matchWins.w;
   blackWinsEl.textContent = matchWins.b;
   moveCountEl.textContent = moveCount;
+}
+
+function squareName(row, col) {
+  return FILES[col] + (8 - row);
+}
+
+function formatNotation(from, to, piece, captured) {
+  const type = piece[1];
+  const toSq = squareName(to.row, to.col);
+
+  if (type === "P") {
+    let notation = captured ? FILES[from.col] + "x" + toSq : toSq;
+    if (to.row === 0 || to.row === 7) notation += "=Q";
+    return notation;
+  }
+
+  return type + (captured ? "x" : "") + toSq;
+}
+
+function buildMoveRecord(from, to, piece, captured, color) {
+  const type = piece[1];
+  const fromSq = squareName(from.row, from.col);
+  const toSq = squareName(to.row, to.col);
+  const notation = formatNotation(from, to, piece, captured);
+
+  let tip;
+  if (type === "P") {
+    if (captured) {
+      tip = "Pawn capture: write the file letter, x, then the destination (e.g. exd5).";
+    } else if (Math.abs(to.row - from.row) === 2) {
+      tip = "A pawn's first move may jump two squares; only the destination square is notated.";
+    } else if (to.row === 0 || to.row === 7) {
+      tip = "Promotion — when a pawn reaches the far rank it becomes a Queen (=Q).";
+    } else {
+      tip = "Pawn moves use only the destination square (e.g. e4, d5).";
+    }
+  } else if (captured) {
+    tip = `${PIECE_NAMES[type]} capture: piece letter + x + square (e.g. Bxe5).`;
+  } else {
+    tip = `${PIECE_NAMES[type]} move: piece letter + destination square (e.g. Nf3, Qd1).`;
+  }
+
+  return {
+    color,
+    notation,
+    from: fromSq,
+    to: toSq,
+    piece: type,
+    pieceName: PIECE_NAMES[type],
+    captured: captured ? PIECE_NAMES[captured[1]] : null,
+    tip,
+  };
+}
+
+function showLesson(record, index) {
+  selectedHistoryIndex = index;
+  moveLessonEl.hidden = false;
+  const side = record.color === "w" ? "White" : "Black";
+  lessonTextEl.innerHTML =
+    `<strong>${side}: ${record.notation}</strong>` +
+    `<span class="lesson-detail">${record.from} → ${record.to}</span>` +
+    (record.captured
+      ? `<span class="lesson-capture">Takes ${record.captured}</span>`
+      : "") +
+    `<em>${record.tip}</em>`;
+  updateMoveHistoryHighlight();
+}
+
+function updateMoveHistoryHighlight() {
+  moveHistoryListEl.querySelectorAll(".history-move").forEach((btn) => {
+    btn.classList.toggle("is-selected", Number(btn.dataset.index) === selectedHistoryIndex);
+  });
+}
+
+function updateMoveHistory(latestRecord) {
+  if (moveHistory.length === 0) {
+    moveHistoryListEl.innerHTML =
+      '<p class="history-empty">No moves yet — play a pawn or piece to begin.</p>';
+    moveLessonEl.hidden = true;
+    return;
+  }
+
+  let html = "";
+  for (let i = 0; i < moveHistory.length; i += 2) {
+    const num = i / 2 + 1;
+    const white = moveHistory[i];
+    const black = moveHistory[i + 1];
+
+    html += `<div class="history-row">`;
+    html += `<span class="history-num">${num}.</span>`;
+    html += `<button type="button" class="history-move history-move--white" data-index="${i}">${white.notation}</button>`;
+    html += black
+      ? `<button type="button" class="history-move history-move--black" data-index="${i + 1}">${black.notation}</button>`
+      : `<span class="history-move history-move--pending"></span>`;
+    html += `</div>`;
+  }
+
+  moveHistoryListEl.innerHTML = html;
+
+  if (latestRecord) {
+    showLesson(latestRecord, moveHistory.length - 1);
+  }
+
+  moveHistoryListEl.scrollTop = moveHistoryListEl.scrollHeight;
 }
 
 function inBounds(r, c) {
@@ -272,8 +389,13 @@ async function onSquareClick(row, col) {
     animating = true;
     const from = selected;
     const to = { row, col };
+    const piece = board[from.row][from.col];
+    const captured = board[to.row][to.col];
 
     await animateMove(from, to);
+
+    const record = buildMoveRecord(from, to, piece, captured, turn);
+    moveHistory.push(record);
 
     const { winner } = applyMove(from, to);
     selected = null;
@@ -284,6 +406,7 @@ async function onSquareClick(row, col) {
 
     render();
     updateScorePanel();
+    updateMoveHistory(record);
     animating = false;
     return;
   }
@@ -301,5 +424,12 @@ async function onSquareClick(row, col) {
 
 matchWins = { w: 0, b: 0 };
 resetBtn.addEventListener("click", newGame);
+
+moveHistoryListEl.addEventListener("click", (e) => {
+  const btn = e.target.closest(".history-move[data-index]");
+  if (!btn) return;
+  const index = Number(btn.dataset.index);
+  showLesson(moveHistory[index], index);
+});
 
 newGame();
