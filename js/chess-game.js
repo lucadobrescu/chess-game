@@ -1,6 +1,7 @@
 window.ArcadeGames = window.ArcadeGames || {};
 
 (function () {
+  const VARIANT_STORAGE_KEY = "chess-variant";
   const PIECE_VALUE = { P: 1, N: 3, B: 3, R: 5, Q: 9, K: 0 };
   const FILES = "abcdefgh";
   const PIECE_NAMES = {
@@ -11,6 +12,7 @@ window.ArcadeGames = window.ArcadeGames || {};
   let boardEl;
   let statusEl;
   let turnIndicatorEl;
+  let variantBarEl;
 
   let board;
   let turn;
@@ -26,6 +28,7 @@ window.ArcadeGames = window.ArcadeGames || {};
   let prevBlackCaptured;
   let moveHistory;
   let selectedHistoryIndex;
+  let activeVariant;
 
   let whiteCapturedEl;
   let blackCapturedEl;
@@ -43,9 +46,59 @@ window.ArcadeGames = window.ArcadeGames || {};
   let boardClickHandler;
   let historyClickHandler;
   let unbindSkinChange;
+  let variantClickHandler;
 
   function getGlyph(piece) {
     return window.ArcadeShell.getGlyph(piece);
+  }
+
+  function loadVariant() {
+    try {
+      const saved = localStorage.getItem(VARIANT_STORAGE_KEY);
+      if (saved === "freestyle" || saved === "standard") return saved;
+    } catch {
+      /* use default */
+    }
+    return "standard";
+  }
+
+  function saveVariant() {
+    localStorage.setItem(VARIANT_STORAGE_KEY, activeVariant);
+  }
+
+  function isLightSquare(row, col) {
+    return (row + col) % 2 === 0;
+  }
+
+  function generateBackRank(row) {
+    const queenOnLight = row === 7;
+    const slots = Array(8).fill(null);
+    const empty = () => [0, 1, 2, 3, 4, 5, 6, 7].filter((i) => slots[i] === null);
+
+    const lightCols = [0, 1, 2, 3, 4, 5, 6, 7].filter((c) => isLightSquare(row, c));
+    const darkCols = [0, 1, 2, 3, 4, 5, 6, 7].filter((c) => !isLightSquare(row, c));
+
+    const availLight = lightCols.filter((c) => slots[c] === null);
+    const availDark = darkCols.filter((c) => slots[c] === null);
+    slots[availLight[Math.floor(Math.random() * availLight.length)]] = "B";
+    slots[availDark[Math.floor(Math.random() * availDark.length)]] = "B";
+
+    const queenEligible = empty().filter((c) =>
+      queenOnLight ? isLightSquare(row, c) : !isLightSquare(row, c)
+    );
+    slots[queenEligible[Math.floor(Math.random() * queenEligible.length)]] = "Q";
+
+    let rem = empty();
+    slots[rem[Math.floor(Math.random() * rem.length)]] = "N";
+    rem = empty();
+    slots[rem[Math.floor(Math.random() * rem.length)]] = "N";
+
+    rem = empty().sort((a, b) => a - b);
+    slots[rem[0]] = "R";
+    slots[rem[1]] = "K";
+    slots[rem[2]] = "R";
+
+    return slots;
   }
 
   function initialBoard() {
@@ -60,8 +113,25 @@ window.ArcadeGames = window.ArcadeGames || {};
     return b;
   }
 
+  function freestyleBoard() {
+    const whiteBack = generateBackRank(7);
+    const blackBack = generateBackRank(0);
+    const b = Array.from({ length: 8 }, () => Array(8).fill(null));
+    for (let c = 0; c < 8; c++) {
+      b[0][c] = "b" + blackBack[c];
+      b[1][c] = "bP";
+      b[6][c] = "wP";
+      b[7][c] = "w" + whiteBack[c];
+    }
+    return b;
+  }
+
+  function setupBoard() {
+    return activeVariant === "freestyle" ? freestyleBoard() : initialBoard();
+  }
+
   function newGame() {
-    board = initialBoard();
+    board = setupBoard();
     turn = "w";
     selected = null;
     moves = [];
@@ -87,7 +157,8 @@ window.ArcadeGames = window.ArcadeGames || {};
       turnIndicatorEl.className = "turn-indicator turn-" + (winner === "w" ? "white" : "black");
       return;
     }
-    statusEl.textContent = (turn === "w" ? "White" : "Black") + " to move";
+    const variantLabel = activeVariant === "freestyle" ? " · Freestyle" : "";
+    statusEl.textContent = (turn === "w" ? "White" : "Black") + " to move" + variantLabel;
     turnIndicatorEl.className = "turn-indicator turn-" + (turn === "w" ? "white" : "black");
   }
 
@@ -171,6 +242,11 @@ window.ArcadeGames = window.ArcadeGames || {};
       tip = `${PIECE_NAMES[type]} move: piece letter + destination square (e.g. Nf3, Qd1).`;
     }
 
+    const variantNote =
+      activeVariant === "freestyle" && moveHistory.length === 0
+        ? "Freestyle opening — back ranks were shuffled before play."
+        : null;
+
     return {
       color,
       notation,
@@ -179,7 +255,7 @@ window.ArcadeGames = window.ArcadeGames || {};
       piece: type,
       pieceName: PIECE_NAMES[type],
       captured: captured ? PIECE_NAMES[captured[1]] : null,
-      tip,
+      tip: variantNote ? `${variantNote} ${tip}` : tip,
     };
   }
 
@@ -440,6 +516,22 @@ window.ArcadeGames = window.ArcadeGames || {};
     render();
   }
 
+  function updateVariantUI() {
+    if (!variantBarEl) return;
+    variantBarEl.querySelectorAll(".variant-chip").forEach((chip) => {
+      chip.classList.toggle("is-active", chip.dataset.variant === activeVariant);
+      chip.setAttribute("aria-pressed", chip.dataset.variant === activeVariant ? "true" : "false");
+    });
+  }
+
+  function setVariant(variant) {
+    if (activeVariant === variant) return;
+    activeVariant = variant;
+    saveVariant();
+    updateVariantUI();
+    newGame();
+  }
+
   function bindPanelRefs() {
     whiteCapturedEl = document.getElementById("white-captured");
     blackCapturedEl = document.getElementById("black-captured");
@@ -459,11 +551,16 @@ window.ArcadeGames = window.ArcadeGames || {};
 
   function init(mount) {
     mountEl = mount;
+    activeVariant = loadVariant();
     matchWins = { w: 0, b: 0 };
     bindPanelRefs();
 
     mountEl.innerHTML = `
       <div class="board-column">
+        <div class="variant-bar" role="group" aria-label="Chess variant">
+          <button type="button" class="variant-chip" data-variant="standard" aria-pressed="false">Standard</button>
+          <button type="button" class="variant-chip" data-variant="freestyle" aria-pressed="false">Freestyle</button>
+        </div>
         <div class="board-frame">
           <div class="board-coords board-coords--files">
             <span>a</span><span>b</span><span>c</span><span>d</span>
@@ -479,6 +576,8 @@ window.ArcadeGames = window.ArcadeGames || {};
     `;
 
     boardEl = mountEl.querySelector("#board");
+    variantBarEl = mountEl.querySelector(".variant-bar");
+    updateVariantUI();
 
     boardClickHandler = (e) => {
       const sq = e.target.closest(".square");
@@ -494,6 +593,13 @@ window.ArcadeGames = window.ArcadeGames || {};
       showLesson(moveHistory[index], index);
     };
     moveHistoryListEl.addEventListener("click", historyClickHandler);
+
+    variantClickHandler = (e) => {
+      const chip = e.target.closest(".variant-chip[data-variant]");
+      if (!chip) return;
+      setVariant(chip.dataset.variant);
+    };
+    variantBarEl.addEventListener("click", variantClickHandler);
 
     const skinChangeHandler = () => {
       render();
@@ -511,12 +617,16 @@ window.ArcadeGames = window.ArcadeGames || {};
     if (moveHistoryListEl && historyClickHandler) {
       moveHistoryListEl.removeEventListener("click", historyClickHandler);
     }
+    if (variantBarEl && variantClickHandler) {
+      variantBarEl.removeEventListener("click", variantClickHandler);
+    }
     if (unbindSkinChange) {
       unbindSkinChange();
       unbindSkinChange = null;
     }
     if (mountEl) mountEl.innerHTML = "";
     boardEl = null;
+    variantBarEl = null;
     animating = false;
   }
 
